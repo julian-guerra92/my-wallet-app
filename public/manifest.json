@@ -1,0 +1,8 @@
+{
+  "name": "My Wallet App",
+  "short_name": "MyWallet",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#7c3aed",
+  "icons": []
+}
