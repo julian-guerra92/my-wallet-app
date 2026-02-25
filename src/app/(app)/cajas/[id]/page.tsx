@@ -4,24 +4,11 @@ import { ArrowLeft, Pencil, Plus } from "lucide-react";
 import { getAuthenticatedUserId } from "@/lib/auth-helpers";
 import { prisma } from "@/lib/prisma";
 import { CajaTransacciones } from "@/components/transacciones/CajaTransacciones";
+import { formatBalance } from "@/lib/format";
+import { getProgressColor } from "@/lib/meta-utils";
 
 interface CajaDetailPageProps {
   params: Promise<{ id: string }>;
-}
-
-function formatBalance(amount: number): string {
-  return new Intl.NumberFormat("es-CO", {
-    style: "currency",
-    currency: "COP",
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(amount);
-}
-
-function getProgressColor(pct: number): string {
-  if (pct >= 80) return "bg-success";
-  if (pct >= 50) return "bg-warning";
-  return "bg-error";
 }
 
 function getProgressTextColor(pct: number): string {

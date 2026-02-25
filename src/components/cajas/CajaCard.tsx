@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import { MoreVertical } from "lucide-react";
 import { Card } from "@/components/ui/Card";
 import { ConfirmModal } from "@/components/ui/ConfirmModal";
+import { getProgressColor } from "@/lib/meta-utils";
+import { formatBalance } from "@/lib/format";
 import type { Account } from "@/types";
 
 interface CajaCardProps {
@@ -12,26 +14,11 @@ interface CajaCardProps {
   onArchive: (id: string) => void;
 }
 
-function formatBalance(amount: number): string {
-  return new Intl.NumberFormat("es-CO", {
-    style: "currency",
-    currency: "COP",
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(amount);
-}
-
-function getProgressColor(pct: number): string {
-  if (pct >= 80) return "bg-success";
-  if (pct >= 50) return "bg-warning";
-  return "bg-error";
-}
-
 export function CajaCard({ caja, onArchive }: CajaCardProps) {
   const router = useRouter();
   const [showConfirm, setShowConfirm] = useState(false);
 
-  const pct =
+  const porcentaje =
     caja.isGoal && caja.targetAmount && caja.targetAmount > 0
       ? Math.min(100, Math.round((caja.balance / caja.targetAmount) * 100))
       : 0;
@@ -111,13 +98,13 @@ export function CajaCard({ caja, onArchive }: CajaCardProps) {
           <div className="mt-3 flex flex-col gap-1">
             <div className="w-full bg-base-300 rounded-full h-2 overflow-hidden">
               <div
-                className={`h-2 rounded-full transition-all ${getProgressColor(pct)}`}
-                style={{ width: `${pct}%` }}
+                className={`h-2 rounded-full transition-all ${getProgressColor(porcentaje)}`}
+                style={{ width: `${porcentaje}%` }}
               />
             </div>
             <div className="flex justify-between text-xs text-base-content/50">
               <span>{formatBalance(caja.balance)} de {formatBalance(caja.targetAmount)}</span>
-              <span className="font-semibold">{pct}%</span>
+              <span className="font-semibold">{porcentaje}%</span>
             </div>
           </div>
         )}

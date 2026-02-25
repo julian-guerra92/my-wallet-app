@@ -7,15 +7,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { TransaccionItem } from "@/components/transacciones/TransaccionItem";
-
-function formatBalance(amount: number): string {
-  return new Intl.NumberFormat("es-CO", {
-    style: "currency",
-    currency: "COP",
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(amount);
-}
+import { formatBalance } from "@/lib/format";
 
 export default async function Home() {
   let userId: string;
