@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import { getAuthenticatedUserId } from "@/lib/auth-helpers";
 import { prisma } from "@/lib/prisma";
 import { applyBalance, revertBalance } from "@/lib/balance";
-import { Prisma } from "@prisma/client";
 
 interface RouteContext {
   params: Promise<{ id: string }>;
@@ -49,7 +48,7 @@ export async function PUT(request: Request, { params }: RouteContext) {
 
   const txDate = date ? new Date(date) : oldTx.date;
 
-  const ops: Prisma.PrismaPromise<unknown>[] = [
+  const ops = [
     revertBalance({ accountId: oldTx.accountId, type: oldTx.type, amount: oldTx.amount }),
     applyBalance({ accountId: newAccountId, type, amount }),
     prisma.transaction.update({

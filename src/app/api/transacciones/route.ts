@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import { getAuthenticatedUserId } from "@/lib/auth-helpers";
 import { prisma } from "@/lib/prisma";
 import { applyBalance } from "@/lib/balance";
-import { Prisma } from "@prisma/client";
 
 export async function GET(request: Request) {
   let userId: string;
@@ -60,30 +59,35 @@ export async function POST(request: Request) {
 
   const txDate = date ? new Date(date) : new Date();
 
-  const ops: Prisma.PrismaPromise<unknown>[] = [
-    prisma.transaction.create({
-      data: { amount, type, description: description.trim(), date: txDate, accountId },
-    }),
-    applyBalance({ accountId, type, amount }),
-  ];
-
   if (saveAsTemplate === true) {
     if (!templateName || typeof templateName !== "string" || templateName.trim() === "") {
       return NextResponse.json({ error: "El nombre del favorito es requerido" }, { status: 400 });
     }
-    ops.push(
-      prisma.transactionTemplate.create({
-        data: {
-          name: templateName.trim(),
-          amount,
-          type,
-          description: description.trim(),
-          accountId,
-          userId,
-        },
-      })
-    );
   }
+
+  const cleanTemplateName: string | undefined =
+    saveAsTemplate === true ? (templateName as string).trim() : undefined;
+
+  const ops = [
+    prisma.transaction.create({
+      data: { amount, type, description: description.trim(), date: txDate, accountId },
+    }),
+    applyBalance({ accountId, type, amount }),
+    ...(cleanTemplateName !== undefined
+      ? [
+        prisma.transactionTemplate.create({
+          data: {
+            name: cleanTemplateName,
+            amount,
+            type,
+            description: description.trim(),
+            accountId,
+            userId,
+          },
+        }),
+      ]
+      : []),
+  ];
 
   const [transaccion] = await prisma.$transaction(ops);
 
