@@ -6,7 +6,7 @@ import { getAuthenticatedUserId } from "@/lib/auth-helpers";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/auth";
 import { prisma } from "@/lib/prisma";
-import { TransaccionItem } from "@/components/transacciones/TransaccionItem";
+import { HistorialGlobal } from "@/components/home/HistorialGlobal";
 import { formatBalance } from "@/lib/format";
 
 export default async function Home() {
@@ -26,9 +26,9 @@ export default async function Home() {
   const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
   const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
 
-  const [accounts, ingresosMes, gastosMes, recientes] = await Promise.all([
+  const [accounts, monthIncome, monthExpenses, recentTransactions, totalTransactions] = await Promise.all([
     prisma.account.findMany({
-      where: { userId, isArchived: false },
+      where: { userId, isArchived: false, isThirdParty: false, isGoal: false },
       select: { balance: true },
     }),
     prisma.transaction.aggregate({
@@ -51,13 +51,16 @@ export default async function Home() {
       where: { account: { userId } },
       include: { account: { select: { name: true, icon: true, color: true } } },
       orderBy: { date: "desc" },
-      take: 5,
+      take: 20,
+    }),
+    prisma.transaction.count({
+      where: { account: { userId } },
     }),
   ]);
 
   const totalBalance = accounts.reduce((sum, a) => sum + a.balance, 0);
-  const totalIngresos = ingresosMes._sum.amount ?? 0;
-  const totalGastos = gastosMes._sum.amount ?? 0;
+  const totalIncome = monthIncome._sum.amount ?? 0;
+  const totalExpenses = monthExpenses._sum.amount ?? 0;
 
   return (
     <div className="space-y-6">
@@ -71,22 +74,23 @@ export default async function Home() {
       <Card className="bg-linear-to-br from-neutral to-neutral/50">
         <div className="flex justify-between items-start">
           <div>
-            <p className="text-sm text-gray-400 font-medium">Saldo Total</p>
+            <p className="text-sm text-gray-400 font-medium">Balance Líquido</p>
             <h2 className="text-4xl font-bold text-white mt-1">{formatBalance(totalBalance)}</h2>
+            <p className="text-xs text-base-content/30 mt-1">Solo cajas propias y corrientes</p>
           </div>
           <div className="p-2 bg-primary/20 rounded-lg text-primary">
             <Wallet size={24} />
           </div>
         </div>
 
-        <div className="flex gap-4 mt-6 pt-4 border-t border-white/10">
+        <div className="flex gap-4 mt-3 pt-4 border-t border-white/10">
           <div className="flex items-center gap-2">
             <div className="p-1.5 bg-success/20 rounded-full text-success">
               <ArrowUpCircle size={18} />
             </div>
             <div>
               <p className="text-xs text-gray-400">Ingresos</p>
-              <p className="text-sm font-semibold text-success">{formatBalance(totalIngresos)}</p>
+              <p className="text-sm font-semibold text-success">{formatBalance(totalIncome)}</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -95,7 +99,7 @@ export default async function Home() {
             </div>
             <div>
               <p className="text-xs text-gray-400">Gastos</p>
-              <p className="text-sm font-semibold text-error">{formatBalance(totalGastos)}</p>
+              <p className="text-sm font-semibold text-error">{formatBalance(totalExpenses)}</p>
             </div>
           </div>
         </div>
@@ -103,24 +107,16 @@ export default async function Home() {
 
       <section>
         <div className="flex justify-between items-center mb-4">
-          <h3 className="font-bold text-lg">Reciente</h3>
+          <h3 className="font-bold text-lg">Movimientos</h3>
           <Link href="/cajas" className="text-xs text-secondary hover:underline">
             Ver cajas
           </Link>
         </div>
 
-        {recientes.length === 0 ? (
-          <div className="flex flex-col items-center justify-center gap-3 py-10 text-center">
-            <span className="text-4xl">📭</span>
-            <p className="text-base-content/50 text-sm">Aun no hay transacciones recientes.</p>
-          </div>
-        ) : (
-          <div className="divide-y divide-base-300">
-            {recientes.map((t) => (
-              <TransaccionItem key={t.id} transaction={t} showOptions={false} />
-            ))}
-          </div>
-        )}
+        <HistorialGlobal
+          initialTransactions={recentTransactions}
+          totalCount={totalTransactions}
+        />
       </section>
     </div>
   );
