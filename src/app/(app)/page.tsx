@@ -58,7 +58,7 @@ export default async function Home() {
     }),
   ]);
 
-  const totalBalance = accounts.reduce((sum: number, a) => sum + a.balance, 0);
+  const totalBalance = accounts.reduce((sum: number, a: { balance: number }) => sum + a.balance, 0);
   const totalIncome = monthIncome._sum.amount ?? 0;
   const totalExpenses = monthExpenses._sum.amount ?? 0;
 
