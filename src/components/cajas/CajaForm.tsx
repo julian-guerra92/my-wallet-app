@@ -33,6 +33,7 @@ export function CajaForm({ initialData, onSubmit, isLoading }: CajaFormProps) {
   const [color, setColor] = useState(initialData?.color ?? SWATCHES[0].hex);
   const [balanceDisplay, setBalanceDisplay] = useState(toDisplayValue(initialData?.balance ?? 0));
   const [isGoal, setIsGoal] = useState(initialData?.isGoal ?? false);
+  const [isThirdParty, setIsThirdParty] = useState(initialData?.isThirdParty ?? false);
   const [targetDisplay, setTargetDisplay] = useState(toDisplayValue(initialData?.targetAmount ?? 0));
   const [error, setError] = useState<string | null>(null);
   const [nameError, setNameError] = useState(false);
@@ -54,7 +55,7 @@ export function CajaForm({ initialData, onSubmit, isLoading }: CajaFormProps) {
     setTimeout(() => setError(null), 3000);
   }
 
-  async function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.SyntheticEvent<HTMLFormElement>) {
     e.preventDefault();
     setError(null);
 
@@ -78,11 +79,12 @@ export function CajaForm({ initialData, onSubmit, isLoading }: CajaFormProps) {
 
     const data: CreateCajaBody = {
       name: name.trim(),
-      icon: icon.trim() || undefined,
+      icon: icon.trim() || "💳",
       color,
       balance,
       isGoal,
       targetAmount: isGoal ? targetAmount : undefined,
+      isThirdParty,
     };
 
     await onSubmit(data);
@@ -149,6 +151,21 @@ export function CajaForm({ initialData, onSubmit, isLoading }: CajaFormProps) {
           />
           <span className="label-text">¿Es Meta de Ahorro?</span>
         </label>
+      </div>
+
+      <div className="form-control">
+        <label className="label cursor-pointer justify-start gap-4">
+          <input
+            type="checkbox"
+            className="toggle toggle-accent"
+            checked={isThirdParty}
+            onChange={(e) => setIsThirdParty(e.target.checked)}
+          />
+          <span className="label-text">¿Dinero de un tercero?</span>
+        </label>
+        <p className="text-xs text-base-content/50 mt-1">
+          Activa esto si administras fondos de otra persona. No afectará tu saldo personal.
+        </p>
       </div>
 
       {isGoal && (

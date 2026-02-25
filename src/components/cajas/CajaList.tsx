@@ -8,9 +8,10 @@ import type { Account } from "@/types";
 interface CajaListProps {
   cajas: Account[];
   metas: Account[];
+  terceros: Account[];
 }
 
-export function CajaList({ cajas, metas }: CajaListProps) {
+export function CajaList({ cajas, metas, terceros }: CajaListProps) {
   const router = useRouter();
 
   async function handleArchive(id: string) {
@@ -18,7 +19,7 @@ export function CajaList({ cajas, metas }: CajaListProps) {
     router.refresh();
   }
 
-  const empty = cajas.length === 0 && metas.length === 0;
+  const empty = cajas.length === 0 && metas.length === 0 && terceros.length === 0;
 
   if (empty) {
     return (
@@ -49,6 +50,17 @@ export function CajaList({ cajas, metas }: CajaListProps) {
           </h2>
           {metas.map((meta) => (
             <CajaCard key={meta.id} caja={meta} onArchive={handleArchive} />
+          ))}
+        </section>
+      )}
+
+      {terceros.length > 0 && (
+        <section className="flex flex-col gap-3">
+          <h2 className="text-xs font-semibold uppercase tracking-widest text-base-content/40">
+            Terceros
+          </h2>
+          {terceros.map((caja) => (
+            <CajaCard key={caja.id} caja={caja} onArchive={handleArchive} />
           ))}
         </section>
       )}

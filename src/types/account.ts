@@ -7,6 +7,7 @@ export interface Account {
   isGoal: boolean;
   targetAmount: number | null;
   isArchived: boolean;
+  isThirdParty: boolean;
   userId: string;
 }
 
@@ -17,6 +18,7 @@ export interface CreateCajaBody {
   balance: number;
   isGoal?: boolean;
   targetAmount?: number;
+  isThirdParty?: boolean;
 }
 
 export interface UpdateCajaBody {
@@ -26,4 +28,5 @@ export interface UpdateCajaBody {
   balance?: number;
   isGoal?: boolean;
   targetAmount?: number;
+  isThirdParty?: boolean;
 }

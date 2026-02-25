@@ -28,7 +28,7 @@ export async function POST(request: Request) {
   }
 
   const body: CreateCajaBody = await request.json();
-  const { name, icon, color, balance, isGoal, targetAmount } = body;
+  const { name, icon, color, balance, isGoal, targetAmount, isThirdParty } = body;
 
   if (!name || typeof name !== "string" || name.trim() === "") {
     return NextResponse.json({ error: "El nombre es requerido" }, { status: 400 });
@@ -50,6 +50,7 @@ export async function POST(request: Request) {
       balance,
       isGoal: isGoal ?? false,
       targetAmount: isGoal ? targetAmount : null,
+      isThirdParty: isThirdParty ?? false,
       userId,
     },
   });

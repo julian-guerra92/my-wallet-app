@@ -6,6 +6,7 @@ import { getAuthenticatedUserId } from "@/lib/auth-helpers";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import { TransaccionItem } from "@/components/transacciones/TransaccionItem";
 
 function formatBalance(amount: number): string {
   return new Intl.NumberFormat("es-CO", {
@@ -29,12 +30,42 @@ export default async function Home() {
   const email = session?.user?.email ?? "";
   const greeting = email.split("@")[0];
 
-  const accounts = await prisma.account.findMany({
-    where: { userId, isArchived: false },
-    select: { balance: true },
-  });
+  const now = new Date();
+  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+  const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
+
+  const [accounts, ingresosMes, gastosMes, recientes] = await Promise.all([
+    prisma.account.findMany({
+      where: { userId, isArchived: false },
+      select: { balance: true },
+    }),
+    prisma.transaction.aggregate({
+      where: {
+        account: { userId },
+        type: "INCOME",
+        date: { gte: startOfMonth, lte: endOfMonth },
+      },
+      _sum: { amount: true },
+    }),
+    prisma.transaction.aggregate({
+      where: {
+        account: { userId },
+        type: "EXPENSE",
+        date: { gte: startOfMonth, lte: endOfMonth },
+      },
+      _sum: { amount: true },
+    }),
+    prisma.transaction.findMany({
+      where: { account: { userId } },
+      include: { account: { select: { name: true, icon: true, color: true } } },
+      orderBy: { date: "desc" },
+      take: 5,
+    }),
+  ]);
 
   const totalBalance = accounts.reduce((sum, a) => sum + a.balance, 0);
+  const totalIngresos = ingresosMes._sum.amount ?? 0;
+  const totalGastos = gastosMes._sum.amount ?? 0;
 
   return (
     <div className="space-y-6">
@@ -63,7 +94,7 @@ export default async function Home() {
             </div>
             <div>
               <p className="text-xs text-gray-400">Ingresos</p>
-              <p className="text-sm font-semibold text-success">{formatBalance(0)}</p>
+              <p className="text-sm font-semibold text-success">{formatBalance(totalIngresos)}</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -72,7 +103,7 @@ export default async function Home() {
             </div>
             <div>
               <p className="text-xs text-gray-400">Gastos</p>
-              <p className="text-sm font-semibold text-error">{formatBalance(0)}</p>
+              <p className="text-sm font-semibold text-error">{formatBalance(totalGastos)}</p>
             </div>
           </div>
         </div>
@@ -86,10 +117,18 @@ export default async function Home() {
           </Link>
         </div>
 
-        <div className="flex flex-col items-center justify-center gap-3 py-10 text-center">
-          <span className="text-4xl">📭</span>
-          <p className="text-base-content/50 text-sm">Aún no hay transacciones recientes.</p>
-        </div>
+        {recientes.length === 0 ? (
+          <div className="flex flex-col items-center justify-center gap-3 py-10 text-center">
+            <span className="text-4xl">📭</span>
+            <p className="text-base-content/50 text-sm">Aun no hay transacciones recientes.</p>
+          </div>
+        ) : (
+          <div className="divide-y divide-base-300">
+            {recientes.map((t) => (
+              <TransaccionItem key={t.id} transaction={t} showOptions={false} />
+            ))}
+          </div>
+        )}
       </section>
     </div>
   );

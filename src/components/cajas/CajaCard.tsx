@@ -78,6 +78,9 @@ export function CajaCard({ caja, onArchive }: CajaCardProps) {
               {caja.isGoal && (
                 <span className="badge badge-primary badge-sm shrink-0">Meta</span>
               )}
+              {caja.isThirdParty && (
+                <span className="badge badge-accent badge-outline badge-xs shrink-0">Tercero</span>
+              )}
             </div>
             <span className="text-sm text-base-content/60">
               {formatBalance(caja.balance)}

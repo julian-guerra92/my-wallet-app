@@ -3,6 +3,7 @@ import Link from "next/link";
 import { ArrowLeft, Pencil, Plus } from "lucide-react";
 import { getAuthenticatedUserId } from "@/lib/auth-helpers";
 import { prisma } from "@/lib/prisma";
+import { CajaTransacciones } from "@/components/transacciones/CajaTransacciones";
 
 interface CajaDetailPageProps {
   params: Promise<{ id: string }>;
@@ -40,9 +41,17 @@ export default async function CajaDetailPage({ params }: CajaDetailPageProps) {
 
   const { id } = await params;
 
-  const caja = await prisma.account.findFirst({
-    where: { id, userId, isArchived: false },
-  });
+  const [caja, transacciones] = await Promise.all([
+    prisma.account.findFirst({
+      where: { id, userId, isArchived: false },
+    }),
+    prisma.transaction.findMany({
+      where: { accountId: id, account: { userId } },
+      include: { account: { select: { name: true, icon: true, color: true } } },
+      orderBy: { date: "desc" },
+      take: 50,
+    }),
+  ]);
 
   if (!caja) {
     redirect("/cajas");
@@ -70,6 +79,14 @@ export default async function CajaDetailPage({ params }: CajaDetailPageProps) {
           <Pencil size={18} />
         </Link>
       </header>
+
+      {caja.isThirdParty && (
+        <div role="alert" className="alert alert-info text-sm">
+          <span>
+            Este bolsillo administra fondos de un tercero. Los movimientos no afectan tu saldo personal.
+          </span>
+        </div>
+      )}
 
       <div className="card bg-neutral border border-white/5 shadow-xl">
         <div className="card-body p-5 gap-4">
@@ -118,10 +135,7 @@ export default async function CajaDetailPage({ params }: CajaDetailPageProps) {
         <h2 className="text-xs font-semibold uppercase tracking-widest text-base-content/40">
           Movimientos
         </h2>
-        <div className="flex flex-col items-center justify-center gap-3 py-12 text-center">
-          <span className="text-4xl">📭</span>
-          <p className="text-base-content/50 text-sm">Aún no hay transacciones.</p>
-        </div>
+        <CajaTransacciones transacciones={transacciones} />
       </section>
 
       <Link

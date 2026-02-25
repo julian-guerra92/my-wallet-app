@@ -7,25 +7,28 @@ generator client {
 }
 
 model User {
-  id          String    @id @default(uuid())
-  email       String    @unique
+  id          String                @id @default(uuid())
+  email       String                @unique
   password    String
   twoFaSecret String?
   accounts    Account[]
+  templates   TransactionTemplate[]
 }
 
 model Account {
-  id           String        @id @default(uuid())
+  id           String                @id @default(uuid())
   name         String
-  isGoal       Boolean       @default(false)
+  isGoal       Boolean               @default(false)
   targetAmount Float?
-  balance      Float         @default(0)
+  balance      Float                 @default(0)
   userId       String
   icon         String?
   color        String?
-  isArchived   Boolean       @default(false)
-  user         User          @relation(fields: [userId], references: [id])
+  isArchived   Boolean               @default(false)
+  isThirdParty Boolean               @default(false)
+  user         User                  @relation(fields: [userId], references: [id])
   transactions Transaction[]
+  templates    TransactionTemplate[]
 }
 
 model Transaction {
@@ -36,4 +39,16 @@ model Transaction {
   date        DateTime @default(now())
   accountId   String
   account     Account  @relation(fields: [accountId], references: [id])
+}
+
+model TransactionTemplate {
+  id          String  @id @default(uuid())
+  name        String
+  amount      Float
+  type        String
+  description String
+  accountId   String
+  account     Account @relation(fields: [accountId], references: [id])
+  userId      String
+  user        User    @relation(fields: [userId], references: [id])
 }

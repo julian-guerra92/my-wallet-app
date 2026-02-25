@@ -19,8 +19,9 @@ export default async function CajasPage() {
     orderBy: { name: "asc" },
   });
 
-  const cajas = accounts.filter((a) => !a.isGoal);
+  const propias = accounts.filter((a) => !a.isGoal && !a.isThirdParty);
   const metas = accounts.filter((a) => a.isGoal);
+  const terceros = accounts.filter((a) => a.isThirdParty && !a.isGoal);
 
   return (
     <div className="flex flex-col gap-6">
@@ -31,7 +32,7 @@ export default async function CajasPage() {
         </Link>
       </header>
 
-      <CajaList cajas={cajas} metas={metas} />
+      <CajaList cajas={propias} metas={metas} terceros={terceros} />
     </div>
   );
 }

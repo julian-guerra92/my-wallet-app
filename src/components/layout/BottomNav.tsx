@@ -10,7 +10,7 @@ export function BottomNav() {
   const navItems = [
     { name: "Inicio", href: "/", icon: Home },
     { name: "Cajas", href: "/cajas", icon: Wallet },
-    { name: "Agregar", href: "/agregar", icon: Plus, isFab: true },
+    { name: "Agregar", href: "/transacciones/agregar", icon: Plus, isFab: true },
     { name: "Metas", href: "/metas", icon: Target },
     { name: "Perfil", href: "/perfil", icon: User },
   ];

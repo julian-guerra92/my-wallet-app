@@ -47,7 +47,7 @@ export async function PUT(request: Request, { params }: RouteContext) {
   }
 
   const body: UpdateCajaBody = await request.json();
-  const { name, icon, color, balance, isGoal, targetAmount } = body;
+  const { name, icon, color, balance, isGoal, targetAmount, isThirdParty } = body;
 
   if (name !== undefined && (typeof name !== "string" || name.trim() === "")) {
     return NextResponse.json({ error: "El nombre no puede estar vacío" }, { status: 400 });
@@ -73,6 +73,7 @@ export async function PUT(request: Request, { params }: RouteContext) {
       ...(balance !== undefined && { balance }),
       ...(isGoal !== undefined && { isGoal }),
       ...(targetAmount !== undefined && { targetAmount: resolvedIsGoal ? targetAmount : null }),
+      ...(isThirdParty !== undefined && { isThirdParty }),
     },
   });
 
