@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { Plus } from "lucide-react";
+import type { Account } from "@prisma/client";
 import { getAuthenticatedUserId } from "@/lib/auth-helpers";
 import { prisma } from "@/lib/prisma";
 import { CajaList } from "@/components/cajas/CajaList";
@@ -19,9 +20,9 @@ export default async function CajasPage() {
     orderBy: { name: "asc" },
   });
 
-  const propias = accounts.filter((a) => !a.isGoal && !a.isThirdParty);
-  const metas = accounts.filter((a) => a.isGoal);
-  const terceros = accounts.filter((a) => a.isThirdParty && !a.isGoal);
+  const propias = accounts.filter((a: Account) => !a.isGoal && !a.isThirdParty);
+  const metas = accounts.filter((a: Account) => a.isGoal);
+  const terceros = accounts.filter((a: Account) => a.isThirdParty && !a.isGoal);
 
   return (
     <div className="flex flex-col gap-6">
