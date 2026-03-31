@@ -140,9 +140,3 @@ Nota tecnica: `@serwist/next` no trabaja con Turbopack en esta configuracion, po
 - `src/components`: componentes de UI y modulos por dominio.
 - `src/lib`: helpers de auth, formato, Prisma y logica financiera.
 - `prisma`: schema, migraciones y seed.
-
-## Estado del proyecto
-
-Proyecto activo y en evolucion incremental por historias de usuario.
-
-Si agregas nuevas funcionalidades, actualiza este README para mantenerlo sincronizado con el comportamiento real de la app.
