@@ -1,3 +1,11 @@
+export const TransactionType = {
+  INCOME: "INCOME",
+  EXPENSE: "EXPENSE",
+  TRANSFER: "TRANSFER",
+} as const;
+
+export type TransactionTypeValue = typeof TransactionType[keyof typeof TransactionType];
+
 export interface Transaction {
   id: string;
   amount: number;
@@ -5,6 +13,9 @@ export interface Transaction {
   description: string;
   date: Date | string;
   accountId: string;
+  isTransfer?: boolean;
+  linkedAccountId?: string | null;
+  groupId?: string | null;
 }
 
 export interface TransactionTemplate {
@@ -24,10 +35,11 @@ export interface TransactionTemplate {
 
 export interface TransaccionFormData {
   amount: number;
-  type: "INCOME" | "EXPENSE";
+  type: TransactionTypeValue;
   description: string;
   date: string;
   accountId: string;
+  destinationAccountId?: string;
   saveAsTemplate?: boolean;
   templateName?: string;
 }

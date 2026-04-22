@@ -38,6 +38,9 @@ model Transaction {
   description String
   date        DateTime @default(now())
   accountId   String
+  isTransfer  Boolean  @default(false)
+  linkedAccountId String?
+  groupId     String?
   account     Account  @relation(fields: [accountId], references: [id])
 }
 

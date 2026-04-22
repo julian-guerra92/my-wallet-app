@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getAuthenticatedUserId } from "@/lib/auth-helpers";
 import { prisma } from "@/lib/prisma";
 import { applyBalance, revertBalance } from "@/lib/balance";
+import { TransactionType } from "@/types/transaction";
 
 interface RouteContext {
   params: Promise<{ id: string }>;
@@ -24,13 +25,17 @@ export async function PUT(request: Request, { params }: RouteContext) {
     return NextResponse.json({ error: "Transacción no encontrada" }, { status: 404 });
   }
 
+  if (oldTx.isTransfer && oldTx.groupId) {
+    return NextResponse.json({ error: "Edite o elimine las transferencias desde la interfaz correspondiente (Operación no soportada vía PUT simple)" }, { status: 400 });
+  }
+
   const body = await request.json();
   const { amount, type, description, date, accountId } = body;
 
   if (!amount || typeof amount !== "number" || amount <= 0) {
     return NextResponse.json({ error: "El monto debe ser mayor a 0" }, { status: 400 });
   }
-  if (type !== "INCOME" && type !== "EXPENSE") {
+  if (type !== TransactionType.INCOME && type !== TransactionType.EXPENSE) {
     return NextResponse.json({ error: "Tipo inválido" }, { status: 400 });
   }
   if (!description || typeof description !== "string" || description.trim() === "") {
@@ -79,10 +84,27 @@ export async function DELETE(_request: Request, { params }: RouteContext) {
     return NextResponse.json({ error: "Transacción no encontrada" }, { status: 404 });
   }
 
-  await prisma.$transaction([
-    prisma.transaction.delete({ where: { id } }),
-    revertBalance({ accountId: tx.accountId, type: tx.type, amount: tx.amount }),
-  ]);
+  const ops: any[] = [];
+
+  if (tx.isTransfer && tx.groupId) {
+    const linkedTxs = await prisma.transaction.findMany({
+      where: { groupId: tx.groupId }
+    });
+
+    for (const linkedTx of linkedTxs) {
+      ops.push(
+        prisma.transaction.delete({ where: { id: linkedTx.id } }),
+        revertBalance({ accountId: linkedTx.accountId, type: linkedTx.type, amount: linkedTx.amount })
+      );
+    }
+  } else {
+    ops.push(
+      prisma.transaction.delete({ where: { id } }),
+      revertBalance({ accountId: tx.accountId, type: tx.type, amount: tx.amount })
+    );
+  }
+
+  await prisma.$transaction(ops);
 
   return NextResponse.json({ ok: true }, { status: 200 });
 }

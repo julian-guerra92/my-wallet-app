@@ -1,4 +1,5 @@
 import type { Transaction } from "@/types";
+import { TransactionType } from "@/types/transaction";
 
 export function calcularFechaEstimada(
   transactions: Transaction[],
@@ -20,9 +21,9 @@ export function calcularFechaEstimada(
   let totalExpense = 0;
 
   for (const tx of transactions) {
-    if (tx.type === "INCOME") {
+    if (tx.type === TransactionType.INCOME) {
       totalIncome += tx.amount;
-    } else if (tx.type === "EXPENSE") {
+    } else if (tx.type === TransactionType.EXPENSE) {
       totalExpense += tx.amount;
     }
   }

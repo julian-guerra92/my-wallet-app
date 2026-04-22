@@ -9,6 +9,8 @@ import { prisma } from "@/lib/prisma";
 import { HistorialGlobal } from "@/components/home/HistorialGlobal";
 import { formatBalance } from "@/lib/format";
 
+import { TransactionType } from "@/types/transaction";
+
 export default async function Home() {
   let userId: string;
   try {
@@ -34,7 +36,7 @@ export default async function Home() {
     prisma.transaction.aggregate({
       where: {
         account: { userId },
-        type: "INCOME",
+        type: TransactionType.INCOME,
         date: { gte: startOfMonth, lte: endOfMonth },
       },
       _sum: { amount: true },
@@ -42,7 +44,7 @@ export default async function Home() {
     prisma.transaction.aggregate({
       where: {
         account: { userId },
-        type: "EXPENSE",
+        type: TransactionType.EXPENSE,
         date: { gte: startOfMonth, lte: endOfMonth },
       },
       _sum: { amount: true },

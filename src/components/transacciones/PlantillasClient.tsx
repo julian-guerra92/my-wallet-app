@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Trash2 } from "lucide-react";
 import { ConfirmModal } from "@/components/ui/ConfirmModal";
 import type { TransactionTemplate } from "@/types";
+import { TransactionType } from "@/types/transaction";
 
 interface PlantillasClientProps {
   plantillas: TransactionTemplate[];
@@ -49,10 +50,10 @@ export function PlantillasClient({ plantillas: initial }: PlantillasClientProps)
                 <p className="font-medium text-sm truncate">{p.name}</p>
                 <span
                   className={`badge badge-xs ${
-                    p.type === "INCOME" ? "badge-success" : "badge-error"
+                    p.type === TransactionType.INCOME ? "badge-success" : "badge-error"
                   }`}
                 >
-                  {p.type === "INCOME" ? "INGRESO" : "GASTO"}
+                  {p.type === TransactionType.INCOME ? "INGRESO" : "GASTO"}
                 </span>
               </div>
               <p className="text-xs text-base-content/50 truncate">
@@ -61,7 +62,7 @@ export function PlantillasClient({ plantillas: initial }: PlantillasClientProps)
             </div>
             <span
               className={`text-sm font-semibold shrink-0 ${
-                p.type === "INCOME" ? "text-success" : "text-error"
+                p.type === TransactionType.INCOME ? "text-success" : "text-error"
               }`}
             >
               ${formatAmount(p.amount)}

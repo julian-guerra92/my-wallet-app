@@ -1,10 +1,11 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { MoreVertical } from "lucide-react";
+import { ArrowRightLeft, MoreVertical } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { ConfirmModal } from "@/components/ui/ConfirmModal";
 import type { Transaction, Account } from "@/types";
+import { TransactionType } from "@/types/transaction";
 
 interface TransaccionItemProps {
   transaction: Transaction & { account: Pick<Account, "name" | "icon" | "color"> };
@@ -22,7 +23,7 @@ export function TransaccionItem({ transaction, onDelete, showOptions = true }: T
   const [menuOpen, setMenuOpen] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
-  const isIncome = transaction.type === "INCOME";
+  const isIncome = transaction.type === TransactionType.INCOME;
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
@@ -44,8 +45,13 @@ export function TransaccionItem({ transaction, onDelete, showOptions = true }: T
     onDelete?.(transaction.id);
   }
 
-  const iconBg = transaction.account.color ?? "#6b7280";
-  const icon = transaction.account.icon ?? "💳";
+  let iconBg = transaction.account.color ?? "#6b7280";
+  let icon: React.ReactNode = transaction.account.icon ?? "💳";
+  
+  if (transaction.isTransfer) {
+     iconBg = "#7c3aed";
+     icon = <ArrowRightLeft size={16} className="text-white" />;
+  }
 
   return (
     <>

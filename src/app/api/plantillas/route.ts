@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getAuthenticatedUserId } from "@/lib/auth-helpers";
 import { prisma } from "@/lib/prisma";
+import { TransactionType } from "@/types/transaction";
 
 export async function GET() {
   let userId: string;
@@ -36,7 +37,7 @@ export async function POST(request: Request) {
   if (!amount || typeof amount !== "number" || amount <= 0) {
     return NextResponse.json({ error: "El monto debe ser mayor a 0" }, { status: 400 });
   }
-  if (type !== "INCOME" && type !== "EXPENSE") {
+  if (type !== TransactionType.INCOME && type !== TransactionType.EXPENSE) {
     return NextResponse.json({ error: "Tipo invalido" }, { status: 400 });
   }
   if (!description || typeof description !== "string" || description.trim() === "") {

@@ -1,4 +1,5 @@
 import { prisma } from "./prisma";
+import { TransactionType } from "@/types/transaction";
 
 export interface BalanceOperation {
   accountId: string;
@@ -7,7 +8,7 @@ export interface BalanceOperation {
 }
 
 function computeDelta(type: string, amount: number): number {
-  return type === "INCOME" ? amount : -amount;
+  return type === TransactionType.INCOME ? amount : -amount;
 }
 
 export function applyBalance({ accountId, type, amount }: BalanceOperation) {

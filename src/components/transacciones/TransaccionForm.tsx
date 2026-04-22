@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import { Star, ChevronDown } from "lucide-react";
 import type { Account, Transaction, TransactionTemplate, TransaccionFormData } from "@/types";
+import { TransactionType } from "@/types/transaction";
 
 interface TransaccionFormProps {
   cajas: Account[];
@@ -48,8 +49,8 @@ export function TransaccionForm({
   onSubmit,
   isLoading,
 }: TransaccionFormProps) {
-  const [type, setType] = useState<"INCOME" | "EXPENSE">(
-    (initialData?.type as "INCOME" | "EXPENSE") ?? "EXPENSE"
+  const [type, setType] = useState<TransaccionFormData["type"]>(
+    (initialData?.type as TransaccionFormData["type"]) ?? TransactionType.EXPENSE
   );
   const [amountDisplay, setAmountDisplay] = useState(toDisplayValue(initialData?.amount ?? 0));
   const [description, setDescription] = useState(initialData?.description ?? "");
@@ -57,6 +58,7 @@ export function TransaccionForm({
   const [accountId, setAccountId] = useState(
     initialData?.accountId ?? preselectedCajaId ?? cajas[0]?.id ?? ""
   );
+  const [destinationAccountId, setDestinationAccountId] = useState("");
   const [saveAsTemplate, setSaveAsTemplate] = useState(false);
   const [templateName, setTemplateName] = useState("");
   const [showFavoritos, setShowFavoritos] = useState(false);
@@ -79,7 +81,7 @@ export function TransaccionForm({
   }, []);
 
   function applyTemplate(t: TransactionTemplate) {
-    setType(t.type as "INCOME" | "EXPENSE");
+    setType(t.type as TransaccionFormData["type"]);
     setAmountDisplay(toDisplayValue(t.amount));
     setDescription(t.description);
     setAccountId(t.accountId);
@@ -107,6 +109,16 @@ export function TransaccionForm({
       setError("Selecciona una caja.");
       return;
     }
+    if (type === TransactionType.TRANSFER) {
+      if (!destinationAccountId) {
+        setError("Selecciona una caja de destino.");
+        return;
+      }
+      if (accountId === destinationAccountId) {
+        setError("La caja origen y destino no pueden ser la misma.");
+        return;
+      }
+    }
     if (saveAsTemplate && !templateName.trim()) {
       setError("El nombre del favorito es requerido.");
       return;
@@ -118,12 +130,14 @@ export function TransaccionForm({
       description: description.trim(),
       date,
       accountId,
-      saveAsTemplate,
-      templateName: saveAsTemplate ? templateName.trim() : undefined,
+      destinationAccountId: type === TransactionType.TRANSFER ? destinationAccountId : undefined,
+      saveAsTemplate: type === TransactionType.TRANSFER ? false : saveAsTemplate,
+      templateName: saveAsTemplate && type !== TransactionType.TRANSFER ? templateName.trim() : undefined,
     });
   }
 
-  const isIncome = type === "INCOME";
+  const isIncome = type === TransactionType.INCOME;
+  const isTransfer = type === TransactionType.TRANSFER;
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-5">
@@ -132,20 +146,28 @@ export function TransaccionForm({
       )}
 
       <div
-        className={`rounded-2xl p-1 flex transition-colors duration-200 ${isIncome ? "bg-success/20" : "bg-error/20"
+        className={`rounded-2xl p-1 flex transition-colors duration-200 ${isIncome ? "bg-success/20" : isTransfer ? "bg-primary/20" : "bg-error/20"
           }`}
       >
         <button
           type="button"
-          onClick={() => setType("EXPENSE")}
-          className={`flex-1 py-2 rounded-xl font-semibold text-sm transition-colors duration-200 ${!isIncome ? "bg-base-100 shadow text-error" : "text-base-content/50"
+          onClick={() => setType(TransactionType.EXPENSE)}
+          className={`flex-1 py-2 rounded-xl font-semibold text-sm transition-colors duration-200 ${type === TransactionType.EXPENSE ? "bg-base-100 shadow text-error" : "text-base-content/50"
             }`}
         >
           GASTO
         </button>
         <button
           type="button"
-          onClick={() => setType("INCOME")}
+          onClick={() => setType(TransactionType.TRANSFER)}
+          className={`flex-1 py-2 rounded-xl font-semibold text-sm transition-colors duration-200 ${isTransfer ? "bg-base-100 shadow text-primary" : "text-base-content/50"
+            }`}
+        >
+          TRASLADO
+        </button>
+        <button
+          type="button"
+          onClick={() => setType(TransactionType.INCOME)}
           className={`flex-1 py-2 rounded-xl font-semibold text-sm transition-colors duration-200 ${isIncome ? "bg-base-100 shadow text-success" : "text-base-content/50"
             }`}
         >
@@ -153,48 +175,50 @@ export function TransaccionForm({
         </button>
       </div>
 
-      <div className="relative" ref={dropdownRef}>
-        <button
-          type="button"
-          onClick={() => setShowFavoritos((v) => !v)}
-          className="btn btn-outline btn-sm gap-2 w-full"
-        >
-          <Star size={16} className="text-primary" />
-          Usar Favorito
-        </button>
+      {!isTransfer && (
+        <div className="relative" ref={dropdownRef}>
+          <button
+            type="button"
+            onClick={() => setShowFavoritos((v) => !v)}
+            className="btn btn-outline btn-sm gap-2 w-full"
+          >
+            <Star size={16} className="text-primary" />
+            Usar Favorito
+          </button>
 
-        {showFavoritos && (
-          <div className="absolute z-10 mt-1 w-full bg-base-100 border border-base-300 rounded-xl shadow-lg max-h-56 overflow-y-auto">
-            {plantillas.length === 0 ? (
-              <p className="text-sm text-base-content/50 p-4 text-center">
-                Aun no tienes favoritos
-              </p>
-            ) : (
-              plantillas.map((t) => (
-                <button
-                  key={t.id}
-                  type="button"
-                  onClick={() => applyTemplate(t)}
-                  className="flex items-center justify-between w-full px-4 py-3 text-left hover:bg-base-200 transition-colors"
-                >
-                  <div>
-                    <p className="font-medium text-sm">{t.name}</p>
-                    <p className="text-xs text-base-content/50">
-                      {t.description} · {t.account?.name ?? ""}
-                    </p>
-                  </div>
-                  <span
-                    className={`text-sm font-semibold ${t.type === "INCOME" ? "text-success" : "text-error"
-                      }`}
+          {showFavoritos && (
+            <div className="absolute z-10 mt-1 w-full bg-base-100 border border-base-300 rounded-xl shadow-lg max-h-56 overflow-y-auto">
+              {plantillas.length === 0 ? (
+                <p className="text-sm text-base-content/50 p-4 text-center">
+                  Aun no tienes favoritos
+                </p>
+              ) : (
+                plantillas.map((t) => (
+                  <button
+                    key={t.id}
+                    type="button"
+                    onClick={() => applyTemplate(t)}
+                    className="flex items-center justify-between w-full px-4 py-3 text-left hover:bg-base-200 transition-colors"
                   >
-                    {t.type === "INCOME" ? "+" : "-"}${t.amount.toLocaleString("es-CO")}
-                  </span>
-                </button>
-              ))
-            )}
-          </div>
-        )}
-      </div>
+                    <div>
+                      <p className="font-medium text-sm">{t.name}</p>
+                      <p className="text-xs text-base-content/50">
+                        {t.description} · {t.account?.name ?? ""}
+                      </p>
+                    </div>
+                    <span
+                      className={`text-sm font-semibold ${t.type === TransactionType.INCOME ? "text-success" : "text-error"
+                        }`}
+                    >
+                      {t.type === TransactionType.INCOME ? "+" : "-"}${t.amount.toLocaleString("es-CO")}
+                    </span>
+                  </button>
+                ))
+              )}
+            </div>
+          )}
+        </div>
+      )}
 
       <div className="form-control gap-1">
         <label className="label label-text">Monto</label>
@@ -235,74 +259,66 @@ export function TransaccionForm({
       </div>
 
       <div className="form-control gap-1">
-        <label className="label label-text">Caja</label>
-        <div className="relative" ref={cajasRef}>
-          <button
-            type="button"
-            onClick={() => setShowCajas((v) => !v)}
-            className="input input-bordered w-full flex items-center justify-between px-4 text-left"
-          >
-            <span>
-              {cajas.length === 0
-                ? "No tienes cajas disponibles"
-                : selectedCaja
-                  ? `${selectedCaja.icon ? selectedCaja.icon + " " : ""}${selectedCaja.name}`
-                  : "Selecciona una caja"}
-            </span>
-            <ChevronDown
-              size={18}
-              className={`text-base-content/40 transition-transform duration-200 ${showCajas ? "rotate-180" : ""
-                }`}
-            />
-          </button>
+        <label className="label label-text">{isTransfer ? "Caja Origen" : "Caja"}</label>
+        <select
+          className="select select-bordered w-full h-12"
+          value={accountId}
+          onChange={(e) => setAccountId(e.target.value)}
+        >
+          <option value="" disabled>Selecciona una caja</option>
+          {cajas.map((c) => (
+            <option key={c.id} value={c.id}>
+              {c.icon ? c.icon + " " : ""}{c.name}
+            </option>
+          ))}
+        </select>
+      </div>
 
-          {showCajas && cajas.length > 0 && (
-            <div className="absolute z-10 mt-1 w-full bg-base-100 border border-base-300 rounded-xl shadow-lg max-h-56 overflow-y-auto">
-              {cajas.map((c) => (
-                <button
-                  key={c.id}
-                  type="button"
-                  onClick={() => {
-                    setAccountId(c.id);
-                    setShowCajas(false);
-                  }}
-                  className={`flex items-center gap-2 w-full px-4 py-3 text-left text-sm hover:bg-base-200 transition-colors ${c.id === accountId ? "font-semibold text-primary" : ""
-                    }`}
-                >
-                  {c.icon && <span>{c.icon}</span>}
-                  {c.name}
-                </button>
-              ))}
-            </div>
+      {isTransfer && (
+        <div className="form-control gap-1">
+          <label className="label label-text">Caja Destino</label>
+          <select
+            className="select select-bordered w-full h-12"
+            value={destinationAccountId}
+            onChange={(e) => setDestinationAccountId(e.target.value)}
+          >
+            <option value="" disabled>Selecciona la caja destino</option>
+            {cajas.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.icon ? c.icon + " " : ""}{c.name}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
+
+      {!isTransfer && (
+        <div className="form-control gap-2">
+          <label className="label cursor-pointer justify-start gap-4">
+            <input
+              type="checkbox"
+              className="toggle toggle-primary"
+              checked={saveAsTemplate}
+              onChange={(e) => setSaveAsTemplate(e.target.checked)}
+            />
+            <span className="label-text">Guardar como favorito</span>
+          </label>
+          {saveAsTemplate && (
+            <input
+              type="text"
+              className="input input-bordered w-full mt-3"
+              placeholder='Nombre del favorito (ej: "Pago Arriendo")'
+              value={templateName}
+              onChange={(e) => setTemplateName(e.target.value)}
+            />
           )}
         </div>
-      </div>
-
-      <div className="form-control gap-2">
-        <label className="label cursor-pointer justify-start gap-4">
-          <input
-            type="checkbox"
-            className="toggle toggle-primary"
-            checked={saveAsTemplate}
-            onChange={(e) => setSaveAsTemplate(e.target.checked)}
-          />
-          <span className="label-text">Guardar como favorito</span>
-        </label>
-        {saveAsTemplate && (
-          <input
-            type="text"
-            className="input input-bordered w-full mt-3"
-            placeholder='Nombre del favorito (ej: "Pago Arriendo")'
-            value={templateName}
-            onChange={(e) => setTemplateName(e.target.value)}
-          />
-        )}
-      </div>
+      )}
 
       <button
         type="submit"
         disabled={isLoading}
-        className={`btn w-full ${isIncome ? "btn-success" : "btn-error"}`}
+        className={`btn w-full ${isTransfer ? "btn-primary" : isIncome ? "btn-success" : "btn-error"}`}
       >
         {isLoading ? <span className="loading loading-spinner loading-sm" /> : "Guardar"}
       </button>
